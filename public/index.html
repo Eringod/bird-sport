@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小鸟运动竞赛 🐦</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --sky-top: #0a0f2e;
+    --sky-mid: #1a2a5e;
+    --sky-dawn: #2d4a8a;
+    --horizon: #f4a261;
+    --sun: #ffd166;
+    --cloud: rgba(255,255,255,0.08);
+    --accent: #06d6a0;
+    --accent2: #ef476f;
+    --accent3: #ffd166;
+    --text: #f0f4ff;
+    --text-dim: rgba(240,244,255,0.55);
+    --card: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.1);
+    --r: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-dawn) 70%, #e8855a 90%, var(--horizon) 100%);
+    min-height: 100vh;
+    color: var(--text);
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Stars */
+  .stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 60%;
+    pointer-events: none; z-index: 0;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.2); }
+  }
+
+  /* Clouds */
+  .cloud-layer {
+    position: fixed; top: 0; left: 0; width: 200%; height: 100%;
+    pointer-events: none; z-index: 0;
+    animation: driftClouds 60s linear infinite;
+  }
+  @keyframes driftClouds { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .cloud {
+    position: absolute;
+    background: var(--cloud);
+    border-radius: 50px;
+    filter: blur(20px);
+  }
+
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px 120px;
+  }
+
+  /* Header */
+  header {
+    padding: 40px 0 20px;
+    text-align: center;
+  }
+  .logo-bird {
+    font-size: 48px;
+    display: block;
+    animation: floatBird 4s ease-in-out infinite;
+  }
+  @keyframes floatBird {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-10px) rotate(3deg); }
+  }
+  header h1 {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    margin: 8px 0 4px;
+    background: linear-gradient(135deg, #fff 0%, var(--accent3) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header p {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .year-badge {
+    display: inline-block;
+    background: rgba(255,209,102,0.15);
+    border: 1px solid rgba(255,209,102,0.3);
+    color: var(--accent3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 8px;
+    letter-spacing: 0.2em;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 50px;
+    padding: 4px;
+    margin: 20px 0;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: var(--text-dim);
+  }
+  .tab.active {
+    background: linear-gradient(135deg, var(--accent), #0aab7c);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(6,214,160,0.3);
+  }
+
+  /* Sky Leaderboard */
+  .sky-board {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .sky-board-title {
+    padding: 14px 16px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sky-visual {
+    padding: 20px 16px;
+    min-height: 160px;
+    position: relative;
+  }
+  .bird-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    animation: slideIn 0.5s ease both;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .bird-rank {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .bird-rank.gold { color: #ffd166; }
+  .bird-rank.silver { color: #c0c0c0; }
+  .bird-rank.bronze { color: #cd7f32; }
+  .bird-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c1, #06d6a0), var(--c2, #0aab7c));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .bird-bar-wrap {
+    flex: 1;
+    position: relative;
+  }
+  .bird-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .bird-pts {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+  }
+  .bird-bar-bg {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bird-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--c1, #06d6a0), var(--c2, #0aab7c));
+    transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 0 8px var(--c1, #06d6a0);
+  }
+  .bird-streak {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .fire { color: #ef476f; }
+
+  /* Section label */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin: 24px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--card-border);
+  }
+
+  /* Check-in Card */
+  .checkin-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r);
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .checkin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .user-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .user-avatar-sm {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #06d6a0, #0aab7c);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .user-name-label {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .user-name-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .date-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    background: rgba(255,209,102,0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,209,102,0.2);
+  }
+
+  /* Sport Types */
+  .sport-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .sport-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 10px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .sport-btn .sport-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  .sport-btn:hover, .sport-btn.selected {
+    border-color: var(--accent);
+    background: rgba(6,214,160,0.12);
+    color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(6,214,160,0.2);
+  }
+
+  /* Duration */
+  .duration-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .dur-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .dur-btn:hover, .dur-btn.selected {
+    border-color: var(--accent3);
+    background: rgba(255,209,102,0.12);
+    color: var(--accent3);
+  }
+
+  /* Note input */
+  .note-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  .note-input:focus { border-color: var(--accent); }
+  .note-input::placeholder { color: var(--text-dim); }
+
+  /* Submit Button */
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #0aab7c);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 6px 24px rgba(6,214,160,0.3);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(6,214,160,0.45);
+  }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* Feed */
+  .feed-item {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    animation: fadeUp 0.4s ease both;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feed-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c1, #06d6a0), var(--c2, #0aab7c));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .feed-body { flex: 1; }
+  .feed-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+  .feed-name { font-size: 13px; font-weight: 700; }
+  .feed-time { font-size: 10px; color: var(--text-dim); }
+  .feed-sport-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+  .feed-note { font-size: 12px; color: var(--text-dim); }
+  .feed-pts-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(6,214,160,0.12);
+    padding: 2px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Today summary */
+  .today-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .summary-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff, var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .summary-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Member selector */
+  .member-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .member-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid var(--card-border);
+    border-radius: 50px;
+    padding: 6px 12px 6px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: var(--text-dim);
+  }
+  .member-chip .chip-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c1, #06d6a0), var(--c2, #0aab7c));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  .member-chip.active {
+    border-color: var(--accent);
+    background: rgba(6,214,160,0.12);
+    color: var(--text);
+  }
+
+  /* Page sections */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, var(--accent), #0aab7c);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 30px rgba(6,214,160,0.4);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 100;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(10, 15, 46, 0.85);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0 20px;
+    z-index: 50;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px 20px;
+    border-radius: 12px;
+    transition: all 0.2s;
+    color: var(--text-dim);
+    font-size: 10px;
+  }
+  .nav-icon { font-size: 22px; }
+  .nav-item.active { color: var(--accent); }
+  .nav-item.active .nav-icon {
+    filter: drop-shadow(0 0 6px var(--accent));
+    animation: navPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes navPop {
+    from { transform: scale(0.7); }
+    to { transform: scale(1); }
+  }
+
+  /* Week calendar */
+  .week-cal {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .day-cell {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .day-cell .day-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .day-cell.today {
+    border-color: var(--accent);
+    background: rgba(6,214,160,0.1);
+  }
+  .day-cell.today .day-num { color: var(--accent); }
+  .day-dot { width: 5px; height: 5px; border-radius: 50%; margin: 2px auto 0; }
+  .day-dot.done { background: var(--accent); }
+  .day-dot.empty { background: transparent; }
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<!-- Clouds -->
+<div class="cloud-layer">
+  <div class="cloud" style="width:200px;height:60px;top:8%;left:10%"></div>
+  <div class="cloud" style="width:160px;height:45px;top:15%;left:35%"></div>
+  <div class="cloud" style="width:250px;height:70px;top:5%;left:60%"></div>
+  <div class="cloud" style="width:180px;height:50px;top:22%;left:80%"></div>
+  <div class="cloud" style="width:200px;height:60px;top:8%;left:110%"></div>
+  <div class="cloud" style="width:160px;height:45px;top:15%;left:135%"></div>
+  <div class="cloud" style="width:250px;height:70px;top:5%;left:160%"></div>
+  <div class="cloud" style="width:180px;height:50px;top:22%;left:180%"></div>
+</div>
+
+<div class="wrap">
+  <header>
+    <span class="logo-bird">🐦</span>
+    <h1>健康人类小鸟运动竞赛</h1>
+    <p>越飞越高 · 越战越勇</p>
+    <span class="year-badge">2026 SEASON</span>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('rank')">🏆 排行榜</div>
+    <div class="tab" onclick="switchTab('checkin')">✅ 打卡</div>
+    <div class="tab" onclick="switchTab('feed')">📡 动态</div>
+  </div>
+
+  <!-- RANK PAGE -->
+  <div class="page active" id="page-rank">
+    <div class="today-summary">
+      <div class="summary-card">
+        <div class="summary-val" id="stat-checkins">0</div>
+        <div class="summary-label">今日打卡</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-val" id="stat-members">6</div>
+        <div class="summary-label">参赛人数</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-val" id="stat-streak">-</div>
+        <div class="summary-label">最长连胜</div>
+      </div>
+    </div>
+
+    <div class="sky-board">
+      <div class="sky-board-title">
+        <span>🌤</span> 本周积分榜 · 飞行高度
+      </div>
+      <div class="sky-visual" id="leaderboard"></div>
+    </div>
+
+    <div class="section-label">本周日历</div>
+    <div class="week-cal" id="week-cal"></div>
+  </div>
+
+  <!-- CHECKIN PAGE -->
+  <div class="page" id="page-checkin">
+    <div class="checkin-card">
+      <div class="checkin-header">
+        <div class="user-select-wrap">
+          <div class="user-avatar-sm" id="checkin-avatar">🦅</div>
+          <div>
+            <div class="user-name-label" id="checkin-name">选择成员</div>
+            <div class="user-name-sub">点击下方切换</div>
+          </div>
+        </div>
+        <div class="date-tag" id="today-date">--/--</div>
+      </div>
+
+      <div class="section-label" style="margin-top:0">选择成员</div>
+      <div class="member-chips" id="member-chips"></div>
+
+      <div class="section-label">运动类型</div>
+      <div class="sport-grid" id="sport-grid"></div>
+
+      <div class="section-label">运动时长</div>
+      <div class="duration-row" id="dur-row">
+        <div class="dur-btn" onclick="selectDur(this, 15)">15分钟</div>
+        <div class="dur-btn" onclick="selectDur(this, 30)">30分钟</div>
+        <div class="dur-btn" onclick="selectDur(this, 60)">1小时</div>
+        <div class="dur-btn" onclick="selectDur(this, 90)">1.5小时</div>
+      </div>
+
+      <textarea class="note-input" id="note-input" placeholder="留下今天的运动感言... 💬" rows="2"></textarea>
+
+      <button class="submit-btn" onclick="submitCheckin()">
+        <span>🚀</span> 完成打卡 · 起飞！
+      </button>
+    </div>
+  </div>
+
+  <!-- FEED PAGE -->
+  <div class="page" id="page-feed">
+    <div class="section-label">全员动态</div>
+    <div id="feed-list"></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-rank" onclick="switchTab('rank')">
+    <span class="nav-icon">🏆</span>排行
+  </div>
+  <div class="nav-item" id="nav-checkin" onclick="switchTab('checkin')">
+    <span class="nav-icon">✅</span>打卡
+  </div>
+  <div class="nav-item" id="nav-feed" onclick="switchTab('feed')">
+    <span class="nav-icon">📡</span>动态
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- DATA ----
+const MEMBERS = [
+  { id: 1, name: '越',  emoji: '🥊', c1: '#ef476f', c2: '#c0392b' },
+  { id: 2, name: '飞',  emoji: '🦅', c1: '#06d6a0', c2: '#0aab7c' },
+  { id: 3, name: '鹤',  emoji: '🦩', c1: '#a29bfe', c2: '#6c5ce7' },
+  { id: 4, name: '敖',  emoji: '🐉', c1: '#ffd166', c2: '#f4a261' },
+  { id: 5, name: '翔',  emoji: '🦋', c1: '#74b9ff', c2: '#0984e3' },
+  { id: 6, name: 'Jo',  emoji: '⚡', c1: '#fd79a8', c2: '#e84393' },
+];
+
+const SPORTS = [
+  { id: 'run',   icon: '🏃', label: '跑步',   pts: 3 },
+  { id: 'bike',  icon: '🚴', label: '骑行',   pts: 2 },
+  { id: 'swim',  icon: '🏊', label: '游泳',   pts: 4 },
+  { id: 'gym',   icon: '🏋️', label: '撸铁',   pts: 3 },
+  { id: 'yoga',  icon: '🧘', label: '瑜伽',   pts: 2 },
+  { id: 'ball',  icon: '⚽', label: '球类',   pts: 2 },
+  { id: 'hike',  icon: '🥾', label: '徒步',   pts: 3 },
+  { id: 'box',   icon: '🥊', label: '格斗',   pts: 4 },
+  { id: 'other', icon: '🌟', label: '其他',   pts: 2 },
+];
+
+let records = [];
+let selectedMemberId = null;
+let selectedSport = null;
+let selectedDuration = null;
+
+// ---- API ----
+async function apiGet(path) {
+  const res = await fetch('/api' + path);
+  if (!res.ok) throw new Error('API error');
+  return res.json();
+}
+async function apiPost(path, body) {
+  const res = await fetch('/api' + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error('API error');
+  return res.json();
+}
+
+// ---- INIT ----
+async function init() {
+  makeStars();
+  setTodayDate();
+  renderSportGrid();
+  renderMemberChips();
+  renderWeekCal();
+  try {
+    const data = await apiGet('/records');
+    records = data.records || [];
+  } catch(e) {
+    records = [];
+  }
+  renderLeaderboard();
+  renderFeed();
+  updateStats();
+}
+
+function makeStars() {
+  const s = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'star';
+    const size = Math.random() * 2 + 1;
+    el.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*3}s;--delay:${Math.random()*3}s`;
+    s.appendChild(el);
+  }
+}
+
+function setTodayDate() {
+  const d = new Date();
+  document.getElementById('today-date').textContent = `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+// ---- LEADERBOARD ----
+function getScores() {
+  const scores = {};
+  const streaks = {};
+  MEMBERS.forEach(m => { scores[m.id] = 0; streaks[m.id] = 0; });
+  const now = Date.now();
+  const weekAgo = now - 7 * 24 * 3600000;
+  records.forEach(r => {
+    if (r.time >= weekAgo) scores[r.memberId] = (scores[r.memberId] || 0) + r.pts;
+  });
+  // Simple streak: consecutive days
+  MEMBERS.forEach(m => {
+    let streak = 0;
+    for (let day = 0; day < 7; day++) {
+      const dayStart = now - (day+1)*86400000;
+      const dayEnd = now - day*86400000;
+      if (records.some(r => r.memberId === m.id && r.time >= dayStart && r.time < dayEnd)) streak++;
+      else break;
+    }
+    streaks[m.id] = streak;
+  });
+  return { scores, streaks };
+}
+
+function renderLeaderboard() {
+  const { scores, streaks } = getScores();
+  const sorted = [...MEMBERS].sort((a,b) => scores[b.id] - scores[a.id]);
+  const maxScore = Math.max(...Object.values(scores), 1);
+  const lb = document.getElementById('leaderboard');
+  lb.innerHTML = '';
+  const rankSymbols = ['🥇','🥈','🥉'];
+  const rankClasses = ['gold','silver','bronze'];
+  sorted.forEach((m, i) => {
+    const pts = scores[m.id];
+    const streak = streaks[m.id];
+    const pct = Math.round(pts / maxScore * 100);
+    lb.innerHTML += `
+      <div class="bird-row" style="--delay:${i*0.08}s">
+        <div class="bird-rank ${rankClasses[i]||''}">${rankSymbols[i] || (i+1)}</div>
+        <div class="bird-avatar" style="--c1:${m.c1};--c2:${m.c2}">${m.emoji}</div>
+        <div class="bird-bar-wrap">
+          <div class="bird-name">
+            <span>${m.name}</span>
+            <span class="bird-pts">${pts} pts</span>
+          </div>
+          <div class="bird-bar-bg">
+            <div class="bird-bar-fill" style="width:${pct}%;--c1:${m.c1};--c2:${m.c2}"></div>
+          </div>
+          <div class="bird-streak">${streak > 0 ? `<span class="fire">🔥</span> ${streak}天连续打卡` : '今日待起飞'}</div>
+        </div>
+      </div>`;
+  });
+}
+
+// ---- STATS ----
+function updateStats() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayCheckins = records.filter(r => r.time >= today.getTime()).length;
+  document.getElementById('stat-checkins').textContent = todayCheckins;
+  const { streaks } = getScores();
+  const maxStreak = Math.max(...Object.values(streaks));
+  document.getElementById('stat-streak').textContent = maxStreak + '天';
+}
+
+// ---- WEEK CAL ----
+function renderWeekCal() {
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  const cal = document.getElementById('week-cal');
+  cal.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now - i*86400000);
+    d.setHours(0,0,0,0);
+    const isToday = i === 0;
+    const hasRecord = records.some(r => {
+      const rd = new Date(r.time); rd.setHours(0,0,0,0);
+      return rd.getTime() === d.getTime();
+    });
+    cal.innerHTML += `
+      <div class="day-cell ${isToday?'today':''}">
+        <div class="day-num">${d.getDate()}</div>
+        <div style="font-size:9px">${days[d.getDay()]}</div>
+        <div class="day-dot ${hasRecord?'done':'empty'}"></div>
+      </div>`;
+  }
+}
+
+// ---- SPORT GRID ----
+function renderSportGrid() {
+  const grid = document.getElementById('sport-grid');
+  grid.innerHTML = '';
+  SPORTS.forEach(s => {
+    grid.innerHTML += `
+      <div class="sport-btn" data-id="${s.id}" onclick="selectSport(this,'${s.id}')">
+        <span class="sport-icon">${s.icon}</span>${s.label}
+      </div>`;
+  });
+}
+
+// ---- MEMBER CHIPS ----
+function renderMemberChips() {
+  const wrap = document.getElementById('member-chips');
+  wrap.innerHTML = '';
+  MEMBERS.forEach(m => {
+    wrap.innerHTML += `
+      <div class="member-chip" data-id="${m.id}" onclick="selectMember(this,${m.id})" style="--c1:${m.c1};--c2:${m.c2}">
+        <div class="chip-avatar" style="background:linear-gradient(135deg,${m.c1},${m.c2})">${m.emoji}</div>
+        ${m.name}
+      </div>`;
+  });
+}
+
+// ---- FEED ----
+function renderFeed() {
+  const list = document.getElementById('feed-list');
+  const sorted = [...records].sort((a,b) => b.time - a.time);
+  list.innerHTML = '';
+  sorted.forEach((r, i) => {
+    const m = MEMBERS.find(x => x.id === r.memberId);
+    const sp = SPORTS.find(x => x.id === r.sport);
+    const ago = timeAgo(r.time);
+    list.innerHTML += `
+      <div class="feed-item" style="--delay:${i*0.05}s">
+        <div class="feed-avatar" style="--c1:${m.c1};--c2:${m.c2};background:linear-gradient(135deg,${m.c1},${m.c2})">${m.emoji}</div>
+        <div class="feed-body">
+          <div class="feed-top">
+            <span class="feed-name">${m.name}</span>
+            <span class="feed-pts-badge">+${r.pts}pts</span>
+          </div>
+          <div class="feed-sport-tag">${sp.icon} ${sp.label} · ${r.duration}分钟</div>
+          ${r.note ? `<div class="feed-note">${r.note}</div>` : ''}
+        </div>
+      </div>`;
+  });
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 3600000) return Math.floor(diff/60000) + '分钟前';
+  if (diff < 86400000) return Math.floor(diff/3600000) + '小时前';
+  return Math.floor(diff/86400000) + '天前';
+}
+
+// ---- INTERACTIONS ----
+function selectMember(el, id) {
+  selectedMemberId = id;
+  document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const m = MEMBERS.find(x => x.id === id);
+  document.getElementById('checkin-avatar').textContent = m.emoji;
+  document.getElementById('checkin-avatar').style.background = `linear-gradient(135deg,${m.c1},${m.c2})`;
+  document.getElementById('checkin-name').textContent = m.name;
+}
+
+function selectSport(el, id) {
+  selectedSport = id;
+  document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectDur(el, mins) {
+  selectedDuration = mins;
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function submitCheckin() {
+  if (!selectedMemberId) return showToast('🙋 请先选择成员！');
+  if (!selectedSport) return showToast('🏃 请选择运动类型！');
+  if (!selectedDuration) return showToast('⏱ 请选择运动时长！');
+
+  const sp = SPORTS.find(x => x.id === selectedSport);
+  const durMult = selectedDuration >= 90 ? 3 : selectedDuration >= 60 ? 2 : selectedDuration >= 30 ? 1.5 : 1;
+  const pts = Math.round(sp.pts * durMult);
+  const note = document.getElementById('note-input').value;
+  const m = MEMBERS.find(x => x.id === selectedMemberId);
+
+  const btn = document.querySelector('.submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> 提交中...';
+
+  try {
+    await apiPost('/records', { memberId: selectedMemberId, sport: selectedSport, duration: selectedDuration, pts, note });
+    records.unshift({ memberId: selectedMemberId, sport: selectedSport, duration: selectedDuration, pts, note, time: Date.now() });
+    showToast(`🚀 ${m.name} 打卡成功！+${pts}pts 飞起来！`);
+    renderLeaderboard(); renderFeed(); renderWeekCal(); updateStats();
+    selectedSport = null; selectedDuration = null;
+    document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('note-input').value = '';
+    setTimeout(() => switchTab('rank'), 1200);
+  } catch(e) {
+    showToast('❌ 提交失败，请重试');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>🚀</span> 完成打卡 · 起飞！';
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function switchTab(tab) {
+  ['rank','checkin','feed'].forEach(t => {
+    document.getElementById(`page-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`nav-${t}`).classList.toggle('active', t === tab);
+    document.querySelectorAll('.tab').forEach((el,i) => {
+      el.classList.toggle('active', ['rank','checkin','feed'][i] === tab);
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>
