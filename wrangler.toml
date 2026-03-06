@@ -1,0 +1,8 @@
+name = "bird-sport"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bird-sport-db"
+database_id = "55d15d10-5f35-4375-a17d-24ff4ac0e1fd"
